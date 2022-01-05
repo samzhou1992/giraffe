@@ -16,7 +16,7 @@ export interface Props extends LayerProps {
   canvasRef: RefObject<HTMLCanvasElement>
 }
 
-export const RectLayer: FunctionComponent<Props> = ({
+const RectLayer: FunctionComponent<Props> = ({
   spec,
   config,
   plotConfig,
@@ -97,3 +97,5 @@ export const RectLayer: FunctionComponent<Props> = ({
 }
 
 RectLayer.displayName = 'RectLayer'
+
+export default RectLayer

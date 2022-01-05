@@ -20,7 +20,7 @@ export interface Props extends LayerProps {
   config: MosaicLayerConfig
 }
 
-export const MosaicLayer: FunctionComponent<Props> = ({
+const MosaicLayer: FunctionComponent<Props> = ({
   spec,
   config,
   plotConfig,
@@ -97,3 +97,5 @@ export const MosaicLayer: FunctionComponent<Props> = ({
 }
 
 MosaicLayer.displayName = 'MosaicLayer'
+
+export default MosaicLayer

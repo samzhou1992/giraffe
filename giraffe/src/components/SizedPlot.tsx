@@ -2,6 +2,7 @@ import React, {
   CSSProperties,
   FunctionComponent,
   RefObject,
+  Suspense,
   useCallback,
   useState,
 } from 'react'
@@ -21,14 +22,30 @@ import {
   SpecTypes,
 } from '../types'
 
-import {AnnotationLayer} from './AnnotationLayer'
-import {SingleStatLayer} from './SingleStatLayer'
-import {LineLayer} from './LineLayer'
-import {BandLayer} from './BandLayer'
-import {ScatterLayer} from './ScatterLayer'
-import {RectLayer} from './RectLayer'
-import {MosaicLayer} from './MosaicLayer'
-import GeoLayer from './GeoLayer'
+const AnnotationLayer = React.lazy(() =>
+  import(/* webpackPrefetch: true */ './AnnotationLayer')
+)
+const SingleStatLayer = React.lazy(() =>
+  import(/* webpackPrefetch: true */ './SingleStatLayer')
+)
+const LineLayer = React.lazy(() =>
+  import(/* webpackPrefetch: true */ './LineLayer')
+)
+const BandLayer = React.lazy(() =>
+  import(/* webpackPrefetch: true */ './BandLayer')
+)
+const ScatterLayer = React.lazy(() =>
+  import(/* webpackPrefetch: true */ './ScatterLayer')
+)
+const RectLayer = React.lazy(() =>
+  import(/* webpackPrefetch: true */ './RectLayer')
+)
+const MosaicLayer = React.lazy(() =>
+  import(/* webpackPrefetch: true */ './MosaicLayer')
+)
+const GeoLayer = React.lazy(() =>
+  import(/* webpackPrefetch: true */ './GeoLayer')
+)
 
 import {Brush} from './Brush'
 import {rangeToDomain} from '../utils/brush'
@@ -179,14 +196,6 @@ export const SizedPlot: FunctionComponent<SizedPlotProps> = ({
     bottom: 0,
   }
 
-  // for single clicking:
-  // the brush element we are using uses a dragListener that consumes the
-  // 'onMouseDown'; thus the 'onClick' does not trigger.
-  // the Drag listener keeps track of the difference between a drag and a single click,
-  // and calls our 'singleClick' method when a single click happens.
-  // see useDragEvents.ts (the DragEvent in particular)
-  // in the src/util directory for more details.
-
   return (
     <div
       className="giraffe-plot"
@@ -218,137 +227,139 @@ export const SizedPlot: FunctionComponent<SizedPlotProps> = ({
         {...dragTargetProps}
       >
         <div className="giraffe-layers" style={fullsizeStyle}>
-          {config.layers.map((layerConfig, layerIndex) => {
-            if (layerConfig.type === LayerTypes.Geo) {
-              return (
-                <GeoLayer
-                  key={layerIndex}
-                  table={newTableFromConfig(config)}
-                  config={layerConfig as GeoLayerConfig}
-                  plotConfig={config}
-                />
-              )
-            }
+          <Suspense fallback={<div>Loading...</div>}>
+            {config.layers.map((layerConfig, layerIndex) => {
+              if (layerConfig.type === LayerTypes.Geo) {
+                return (
+                  <GeoLayer
+                    key={layerIndex}
+                    table={newTableFromConfig(config)}
+                    config={layerConfig as GeoLayerConfig}
+                    plotConfig={config}
+                  />
+                )
+              }
 
-            if (layerConfig.type === LayerTypes.Custom) {
-              const renderProps = {
-                key: layerIndex,
-                width,
-                height,
-                innerWidth: env.innerWidth,
-                innerHeight: env.innerHeight,
+              if (layerConfig.type === LayerTypes.Custom) {
+                const renderProps = {
+                  key: layerIndex,
+                  width,
+                  height,
+                  innerWidth: env.innerWidth,
+                  innerHeight: env.innerHeight,
+                  xScale: env.xScale,
+                  yScale: env.yScale,
+                  xDomain: env.xDomain,
+                  yDomain: env.yDomain,
+                  columnFormatter: env.getFormatterForColumn,
+                  yColumnType: env.yColumnType,
+                }
+
+                return layerConfig.render(renderProps)
+              }
+
+              if (layerConfig.type === LayerTypes.SingleStat) {
+                return (
+                  <LatestValueTransform
+                    key={layerIndex}
+                    table={newTableFromConfig(config)}
+                    allowString={true}
+                  >
+                    {latestValue => (
+                      <SingleStatLayer
+                        stat={latestValue}
+                        config={layerConfig as SingleStatLayerConfig}
+                      />
+                    )}
+                  </LatestValueTransform>
+                )
+              }
+
+              const spec = env.getSpec(layerIndex)
+
+              const sharedProps = {
+                hoverX,
+                hoverY,
+                legendHide: legendHide || forceHoverLegendHide,
+                plotConfig: config,
                 xScale: env.xScale,
                 yScale: env.yScale,
-                xDomain: env.xDomain,
-                yDomain: env.yDomain,
+                width: env.innerWidth,
+                height: env.innerHeight,
+                yColumnType: spec.yColumnType,
                 columnFormatter: env.getFormatterForColumn,
-                yColumnType: env.yColumnType,
               }
 
-              return layerConfig.render(renderProps)
-            }
-
-            if (layerConfig.type === LayerTypes.SingleStat) {
-              return (
-                <LatestValueTransform
-                  key={layerIndex}
-                  table={newTableFromConfig(config)}
-                  allowString={true}
-                >
-                  {latestValue => (
-                    <SingleStatLayer
-                      stat={latestValue}
-                      config={layerConfig as SingleStatLayerConfig}
+              switch (spec.type) {
+                case SpecTypes.Annotation:
+                  return (
+                    <AnnotationLayer
+                      key={layerIndex}
+                      {...sharedProps}
+                      spec={spec}
+                      config={layerConfig as AnnotationLayerConfig}
+                      onHover={hideLegend}
                     />
-                  )}
-                </LatestValueTransform>
-              )
-            }
+                  )
+                case SpecTypes.Line:
+                  return (
+                    <LineLayer
+                      canvasRef={layerCanvasRef}
+                      key={layerIndex}
+                      {...sharedProps}
+                      spec={spec}
+                      config={layerConfig as LineLayerConfig}
+                    />
+                  )
 
-            const spec = env.getSpec(layerIndex)
+                case SpecTypes.Band:
+                  return (
+                    <BandLayer
+                      canvasRef={layerCanvasRef}
+                      key={layerIndex}
+                      {...sharedProps}
+                      spec={spec}
+                      config={layerConfig as BandLayerConfig}
+                    />
+                  )
 
-            const sharedProps = {
-              hoverX,
-              hoverY,
-              legendHide: legendHide || forceHoverLegendHide,
-              plotConfig: config,
-              xScale: env.xScale,
-              yScale: env.yScale,
-              width: env.innerWidth,
-              height: env.innerHeight,
-              yColumnType: spec.yColumnType,
-              columnFormatter: env.getFormatterForColumn,
-            }
+                case SpecTypes.Scatter:
+                  return (
+                    <ScatterLayer
+                      key={layerIndex}
+                      {...sharedProps}
+                      spec={spec}
+                      config={layerConfig as ScatterLayerConfig}
+                    />
+                  )
 
-            switch (spec.type) {
-              case SpecTypes.Annotation:
-                return (
-                  <AnnotationLayer
-                    key={layerIndex}
-                    {...sharedProps}
-                    spec={spec}
-                    config={layerConfig as AnnotationLayerConfig}
-                    onHover={hideLegend}
-                  />
-                )
-              case SpecTypes.Line:
-                return (
-                  <LineLayer
-                    canvasRef={layerCanvasRef}
-                    key={layerIndex}
-                    {...sharedProps}
-                    spec={spec}
-                    config={layerConfig as LineLayerConfig}
-                  />
-                )
+                case SpecTypes.Rect:
+                  return (
+                    <RectLayer
+                      canvasRef={layerCanvasRef}
+                      key={layerIndex}
+                      {...sharedProps}
+                      spec={spec}
+                      config={layerConfig as RectLayerConfig}
+                    />
+                  )
 
-              case SpecTypes.Band:
-                return (
-                  <BandLayer
-                    canvasRef={layerCanvasRef}
-                    key={layerIndex}
-                    {...sharedProps}
-                    spec={spec}
-                    config={layerConfig as BandLayerConfig}
-                  />
-                )
+                case SpecTypes.Mosaic: {
+                  return (
+                    <MosaicLayer
+                      key={layerIndex}
+                      {...sharedProps}
+                      spec={spec}
+                      config={layerConfig as MosaicLayerConfig}
+                    />
+                  )
+                }
 
-              case SpecTypes.Scatter:
-                return (
-                  <ScatterLayer
-                    key={layerIndex}
-                    {...sharedProps}
-                    spec={spec}
-                    config={layerConfig as ScatterLayerConfig}
-                  />
-                )
-
-              case SpecTypes.Rect:
-                return (
-                  <RectLayer
-                    canvasRef={layerCanvasRef}
-                    key={layerIndex}
-                    {...sharedProps}
-                    spec={spec}
-                    config={layerConfig as RectLayerConfig}
-                  />
-                )
-
-              case SpecTypes.Mosaic: {
-                return (
-                  <MosaicLayer
-                    key={layerIndex}
-                    {...sharedProps}
-                    spec={spec}
-                    config={layerConfig as MosaicLayerConfig}
-                  />
-                )
+                default:
+                  return null
               }
-
-              default:
-                return null
-            }
-          })}
+            })}
+          </Suspense>
           {children && children}
         </div>
         <Brush

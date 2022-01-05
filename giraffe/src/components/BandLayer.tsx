@@ -23,7 +23,7 @@ export interface Props extends LayerProps {
 const HIGHLIGHT_HOVERED_LINE = 0.4
 const NO_HIGHLIGHT = 1
 
-export const BandLayer: FunctionComponent<Props> = props => {
+const BandLayer: FunctionComponent<Props> = props => {
   const {
     canvasRef,
     config,
@@ -150,3 +150,5 @@ export const BandLayer: FunctionComponent<Props> = props => {
 }
 
 BandLayer.displayName = 'BandLayer'
+
+export default BandLayer

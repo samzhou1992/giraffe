@@ -2,14 +2,16 @@ const path = require('path')
 const webpack = require('webpack')
 const pkg = require('./package.json')
 
+console.log('publicPath:', path.resolve(__dirname, 'dist'))
 module.exports = {
   entry: './src/index.ts',
   output: {
     filename: 'index.js',
-    libraryTarget: 'umd',
+    chunkFilename: '[name].bundle.js',
     library: 'Giraffe',
+    libraryTarget: 'umd',
     path: path.resolve(__dirname, 'dist'),
-    publicPath: '',
+    publicPath: 'dist/',
     sourceMapFilename: '[file].map[query]',
   },
   externals: {

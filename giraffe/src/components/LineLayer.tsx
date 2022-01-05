@@ -14,7 +14,7 @@ export interface Props extends LayerProps {
   canvasRef: RefObject<HTMLCanvasElement>
 }
 
-export const LineLayer: FunctionComponent<Props> = props => {
+const LineLayer: FunctionComponent<Props> = props => {
   const {
     config,
     spec,
@@ -110,3 +110,5 @@ export const LineLayer: FunctionComponent<Props> = props => {
 }
 
 LineLayer.displayName = 'LineLayer'
+
+export default LineLayer

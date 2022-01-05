@@ -23,7 +23,7 @@ const ANNOTATION_OVERLAY_DEFAULT_STYLE = {
   position: 'absolute',
 } as CSSProperties
 
-export const AnnotationLayer: FunctionComponent<AnnotationLayerProps> = props => {
+const AnnotationLayer: FunctionComponent<AnnotationLayerProps> = props => {
   const {
     config,
     spec,
@@ -115,3 +115,5 @@ export const AnnotationLayer: FunctionComponent<AnnotationLayerProps> = props =>
     </svg>
   )
 }
+
+export default AnnotationLayer

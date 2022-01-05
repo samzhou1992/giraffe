@@ -13,7 +13,7 @@ interface Props extends LayerProps {
   config: ScatterLayerConfig
 }
 
-export const ScatterLayer: FunctionComponent<Props> = props => {
+const ScatterLayer: FunctionComponent<Props> = props => {
   const {config, spec, width, height, xScale, yScale} = props
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -52,3 +52,5 @@ export const ScatterLayer: FunctionComponent<Props> = props => {
 }
 
 ScatterLayer.displayName = 'ScatterLayer'
+
+export default ScatterLayer

@@ -18,7 +18,7 @@ interface Props {
 const getDefaultViewBox = (stat: string): string =>
   `0 0 ${stat.length * 55} 100`
 
-export const SingleStatLayer: FunctionComponent<Props> = props => {
+const SingleStatLayer: FunctionComponent<Props> = props => {
   const {stat, config} = props
   const {
     backgroundColor = null,
@@ -90,3 +90,5 @@ export const SingleStatLayer: FunctionComponent<Props> = props => {
     </div>
   )
 }
+
+export default SingleStatLayer
