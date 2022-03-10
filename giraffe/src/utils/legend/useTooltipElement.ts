@@ -16,16 +16,23 @@ import {useTooltipStyle, useAnnotationStyle} from './useTooltipStyle'
 export const useLegendElement = (className: string) => {
   const ref = useRef<HTMLDivElement>(null)
 
+  let container = document.getElementById(className)
+  if (!container) {
+    container = document.createElement('div')
+    container.id = className
+    document.body.appendChild(container)
+  }
+
   if (ref.current === null) {
     ref.current = document.createElement('div')
     ref.current.classList.add(className)
 
-    document.body.appendChild(ref.current)
+    container.appendChild(ref.current)
   }
 
-  useEffect(() => () => document.body.removeChild(ref.current), [])
+  useEffect(() => () => container.removeChild(ref.current), [])
 
-  useTooltipStyle(ref.current)
+  useTooltipStyle(container as HTMLDivElement)
 
   return ref.current
 }
